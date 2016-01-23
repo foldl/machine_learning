@@ -1,0 +1,602 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 10.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     18814,        593]
+NotebookOptionsPosition[     17875,        555]
+NotebookOutlinePosition[     18261,        572]
+CellTagsIndexPosition[     18218,        569]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["Guassian Mixed Model", "Section"],
+
+Cell[TextData[{
+ "Note: ",
+ StyleBox["FindDistributionParameters",
+  FontSlant->"Italic"],
+ " seems not work for this case? So we do it ourselves. EM algorithm is used."
+}], "Text"],
+
+Cell[TextData[{
+ "CalcLogLikelihood has been optimized to be faster than using the built-in \
+function ",
+ StyleBox["LogLikelihood",
+  FontSlant->"Italic"],
+ "."
+}], "Text"],
+
+Cell[BoxData[
+ FormBox[
+  RowBox[{
+   RowBox[{"p", "(", "x", ")"}], "=", 
+   RowBox[{
+    UnderoverscriptBox["\[Sum]", 
+     RowBox[{"k", "=", "1"}], "K"], 
+    RowBox[{
+     SubscriptBox["\[Pi]", "k"], " ", 
+     RowBox[{"\[ScriptCapitalN]", "(", 
+      RowBox[{
+       SubscriptBox["\[Mu]", "k"], ",", 
+       SubscriptBox["\[CapitalSigma]", "k"]}], ")"}]}]}]}], 
+  TraditionalForm]], "Text"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"CalcLogLikelihood", "[", 
+    RowBox[{"x_List", ",", 
+     RowBox[{"{", 
+      RowBox[{"\[Pi]k_", ",", "\[Mu]s_", ",", "\[CapitalSigma]s_"}], "}"}]}], 
+    "]"}], ":=", 
+   RowBox[{"Tr", "@", 
+    RowBox[{"Log", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"\[Pi]k", ".", "#"}], "&"}], "/@", 
+      RowBox[{"(", 
+       RowBox[{
+        RowBox[{"MapThread", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"PDF", "[", 
+            RowBox[{
+             RowBox[{"MultinormalDistribution", "[", 
+              RowBox[{"#1", ",", "#2"}], "]"}], ",", "x"}], "]"}], "&"}], ",", 
+          RowBox[{"{", 
+           RowBox[{"\[Mu]s", ",", "\[CapitalSigma]s"}], "}"}]}], "]"}], 
+        "\[Transpose]"}], ")"}]}], "]"}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"CalcGamma", "[", 
+    RowBox[{"l_", ",", 
+     RowBox[{"{", 
+      RowBox[{"\[Pi]k_", ",", "\[Mu]s_", ",", "\[CapitalSigma]s_"}], "}"}]}], 
+    "]"}], ":=", 
+   RowBox[{"Module", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"ll", ",", "r"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"ll", "=", 
+       RowBox[{
+        RowBox[{"MapThread", "[", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"#1", 
+            RowBox[{"PDF", "[", 
+             RowBox[{
+              RowBox[{"MultinormalDistribution", "[", 
+               RowBox[{"#2", ",", "#3"}], "]"}], ",", "l"}], "]"}]}], "&"}], 
+          ",", 
+          RowBox[{"{", 
+           RowBox[{"\[Pi]k", ",", "\[Mu]s", ",", "\[CapitalSigma]s"}], 
+           "}"}]}], "]"}], "\[Transpose]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"Function", "[", 
+        RowBox[{
+         RowBox[{"{", "r", "}"}], ",", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"#", "/", 
+            RowBox[{"Tr", "[", "r", "]"}]}], "&"}], "/@", "r"}]}], "]"}], "/@",
+        "ll"}]}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"EMIterate", "[", 
+    RowBox[{"d_", ",", 
+     RowBox[{"{", 
+      RowBox[{"\[Pi]k_", ",", "\[Mu]s_", ",", "\[CapitalSigma]s_"}], "}"}]}], 
+    "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "\[Mu]s2", ",", "\[CapitalSigma]s2", ",", "\[Pi]k2", ",", "\[Gamma]zn", 
+       ",", "Nk"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"\[Gamma]zn", "=", 
+       RowBox[{"CalcGamma", "[", 
+        RowBox[{"d", ",", 
+         RowBox[{"{", 
+          RowBox[{"\[Pi]k", ",", "\[Mu]s", ",", "\[CapitalSigma]s"}], "}"}]}],
+         "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"Nk", "=", 
+       RowBox[{"Tr", "/@", 
+        RowBox[{"(", 
+         RowBox[{"\[Gamma]zn", "\[Transpose]"}], ")"}]}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"\[Mu]s2", "=", 
+       RowBox[{"MapThread", "[", 
+        RowBox[{"Divide", ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"(", 
+             RowBox[{
+              RowBox[{"d", "\[Transpose]"}], ".", "\[Gamma]zn"}], ")"}], 
+            "\[Transpose]"}], ",", "Nk"}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"\[CapitalSigma]s2", "=", 
+       RowBox[{"MapThread", "[", 
+        RowBox[{"Divide", ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{"MapIndexed", "[", 
+            RowBox[{
+             RowBox[{"Function", "[", 
+              RowBox[{
+               RowBox[{"{", 
+                RowBox[{"\[Mu]", ",", "I"}], "}"}], ",", 
+               RowBox[{"Total", "@", 
+                RowBox[{"MapThread", "[", 
+                 RowBox[{
+                  RowBox[{
+                   RowBox[{
+                    RowBox[{"(", 
+                    RowBox[{
+                    RowBox[{
+                    RowBox[{"{", 
+                    RowBox[{"#1", "-", "\[Mu]"}], "}"}], "\[Transpose]"}], 
+                    ".", 
+                    RowBox[{"{", 
+                    RowBox[{"#1", "-", "\[Mu]"}], "}"}]}], ")"}], " ", 
+                    RowBox[{"#2", "[", 
+                    RowBox[{"[", 
+                    RowBox[{"I", "[", 
+                    RowBox[{"[", "1", "]"}], "]"}], "]"}], "]"}]}], "&"}], 
+                  ",", 
+                  RowBox[{"{", 
+                   RowBox[{"d", ",", "\[Gamma]zn"}], "}"}]}], "]"}]}]}], 
+              "]"}], ",", "\[Mu]s2"}], "]"}], ",", "Nk"}], "}"}]}], "]"}]}], 
+      ";", "\[IndentingNewLine]", 
+      RowBox[{"\[Pi]k2", "=", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"#", "/", 
+          RowBox[{"Length", "[", "d", "]"}]}], "&"}], "/@", "Nk"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"{", 
+       RowBox[{"\[Pi]k2", ",", "\[Mu]s2", ",", "\[CapitalSigma]s2"}], 
+       "}"}]}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"GMMEstimate", "[", 
+    RowBox[{"d_", ",", "K_"}], "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{
+      "clusters", ",", "\[Mu]s", ",", "\[CapitalSigma]s", ",", "\[Pi]k", ",", 
+       "\[Gamma]zn", ",", "Nk"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"clusters", "=", 
+       RowBox[{"FindClusters", "[", 
+        RowBox[{"d", ",", "K"}], "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"\[Mu]s", "=", 
+       RowBox[{"Mean", "/@", "clusters"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"\[CapitalSigma]s", "=", 
+       RowBox[{"MapThread", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{
+             RowBox[{"(", 
+              RowBox[{"#1", "-", 
+               RowBox[{"Table", "[", 
+                RowBox[{"#2", ",", 
+                 RowBox[{"Length", "[", "#1", "]"}]}], "]"}]}], ")"}], 
+             "\[Transpose]"}], ".", 
+            RowBox[{"(", 
+             RowBox[{"#1", "-", 
+              RowBox[{"Table", "[", 
+               RowBox[{"#2", ",", 
+                RowBox[{"Length", "[", "#1", "]"}]}], "]"}]}], ")"}]}], "/", 
+           RowBox[{"Length", "[", "#1", "]"}]}], "&"}], ",", 
+         RowBox[{"{", 
+          RowBox[{"clusters", ",", "\[Mu]s"}], "}"}]}], "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"\[Pi]k", "=", 
+       RowBox[{
+        RowBox[{
+         RowBox[{
+          RowBox[{"Length", "[", "#", "]"}], "/", 
+          RowBox[{"Length", "[", "d", "]"}]}], "&"}], "/@", "clusters"}]}], 
+      ";", "\[IndentingNewLine]", 
+      RowBox[{"NestWhile", "[", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"EMIterate", "[", 
+          RowBox[{"d", ",", "#"}], "]"}], "&"}], ",", 
+        RowBox[{"{", 
+         RowBox[{"\[Pi]k", ",", "\[Mu]s", ",", "\[CapitalSigma]s"}], "}"}], 
+        ",", 
+        RowBox[{
+         RowBox[{"Unequal", "[", 
+          RowBox[{
+           RowBox[{"CalcLogLikelihood", "[", 
+            RowBox[{"d", ",", "#1"}], "]"}], ",", 
+           RowBox[{"CalcLogLikelihood", "[", 
+            RowBox[{"d", ",", "#2"}], "]"}]}], "]"}], "&"}], ",", "2"}], 
+       "]"}]}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"ToDistribution", "[", "model_", "]"}], ":=", 
+   RowBox[{"MixtureDistribution", "[", 
+    RowBox[{
+     RowBox[{"model", "[", 
+      RowBox[{"[", "1", "]"}], "]"}], ",", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"MultinormalDistribution", "[", 
+        RowBox[{
+         RowBox[{"#", "[", 
+          RowBox[{"[", "2", "]"}], "]"}], ",", 
+         RowBox[{"#", "[", 
+          RowBox[{"[", "3", "]"}], "]"}]}], "]"}], "&"}], "/@", 
+      RowBox[{"Transpose", "[", "model", "]"}]}]}], "]"}]}], ";"}]}], "Input",
+ InitializationCell->True]
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Mel-Frequency Cepstrum Coefficient", "Section"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{
+   RowBox[{"MelScale", "[", "f_", "]"}], ":=", 
+   RowBox[{"2595", 
+    RowBox[{"Log10", "[", 
+     RowBox[{"1", "+", 
+      FractionBox["f", "700"]}], "]"}]}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"NormalFreq", "[", "mel_", "]"}], ":=", 
+   RowBox[{"700", 
+    RowBox[{"(", 
+     RowBox[{
+      SuperscriptBox["10", 
+       FractionBox["mel", "2595"]], "-", "1"}], ")"}]}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"Preemphasis", "=", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"OutputResponse", "[", 
+      RowBox[{
+       RowBox[{"TransferFunctionModel", "[", 
+        RowBox[{
+         RowBox[{"1", "-", 
+          RowBox[{"0.97", 
+           SuperscriptBox["z", 
+            RowBox[{"-", "1"}]]}]}], ",", "z", ",", 
+         RowBox[{"SamplingPeriod", "\[Rule]", "1"}]}], "]"}], ",", "#"}], 
+      "]"}], "[", 
+     RowBox[{"[", "1", "]"}], "]"}], "&"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"FrameSplit", ":=", 
+   RowBox[{
+    RowBox[{"Partition", "[", 
+     RowBox[{"#", ",", "256", ",", 
+      RowBox[{"256", "/", "4"}]}], "]"}], "&"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"WindowedFFT", "[", "wnd_", "]"}], ":=", 
+   RowBox[{
+    RowBox[{"Fourier", "[", 
+     RowBox[{
+      RowBox[{
+       RowBox[{"Array", "[", 
+        RowBox[{"wnd", ",", 
+         RowBox[{"Length", "[", "#", "]"}], ",", 
+         RowBox[{"{", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"-", "1"}], "/", "2"}], ",", 
+           RowBox[{"1", "/", "2"}]}], "}"}]}], "]"}], "#"}], ",", 
+      RowBox[{"FourierParameters", "\[Rule]", 
+       RowBox[{"{", 
+        RowBox[{"1", ",", " ", 
+         RowBox[{"-", "1"}]}], "}"}]}]}], "]"}], "&"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"MakeTriangle", "[", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"a_", ",", "b_", ",", "c_"}], "}"}], ",", "len_"}], "]"}], ":=", 
+   RowBox[{"PadRight", "[", 
+    RowBox[{
+     RowBox[{"Normal", "@", 
+      RowBox[{"SparseArray", "[", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{"#", "\[Rule]", 
+             RowBox[{
+              RowBox[{"(", 
+               RowBox[{"#", "-", "a"}], ")"}], "/", 
+              RowBox[{"(", 
+               RowBox[{"b", "-", "a"}], ")"}]}]}], ")"}], "&"}], "/@", 
+          RowBox[{"Range", "[", 
+           RowBox[{"a", ",", "b"}], "]"}]}], ")"}], "~", "Join", "~", 
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{
+           RowBox[{"(", 
+            RowBox[{"#", "\[Rule]", 
+             RowBox[{
+              RowBox[{"(", 
+               RowBox[{"c", "-", "#"}], ")"}], "/", 
+              RowBox[{"(", 
+               RowBox[{"c", "-", "b"}], ")"}]}]}], ")"}], "&"}], "/@", 
+          RowBox[{"Range", "[", 
+           RowBox[{"b", ",", "c"}], "]"}]}], ")"}]}], "]"}]}], ",", "len"}], 
+    "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"MelFilterBank", "[", 
+    RowBox[{"fs_", ",", "halflen_", ",", "n_", ",", 
+     RowBox[{"{", 
+      RowBox[{"scaledstart_", ",", "scaledend_"}], "}"}]}], "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"l", ",", "df"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"df", "=", 
+       RowBox[{
+        RowBox[{"fs", "/", "2"}], "/", "halflen"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"l", "=", 
+       RowBox[{"Partition", "[", 
+        RowBox[{
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{"Round", "[", 
+             RowBox[{
+              RowBox[{"NormalFreq", "[", "#", "]"}], "/", "df"}], "]"}], "+", 
+            "1"}], "&"}], "/@", 
+          RowBox[{"Array", "[", 
+           RowBox[{"Identity", ",", 
+            RowBox[{"n", "+", "2"}], ",", 
+            RowBox[{"MelScale", "/@", 
+             RowBox[{"{", 
+              RowBox[{
+               RowBox[{"scaledstart", " ", "fs"}], ",", 
+               RowBox[{"scaledend", " ", "fs"}]}], "}"}]}]}], "]"}]}], ",", 
+         "3", ",", "1"}], "]"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"l", "=", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"MakeTriangle", "[", 
+          RowBox[{"#", ",", "halflen"}], "]"}], "&"}], "/@", "l"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"(", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"#", "/", 
+            RowBox[{"Tr", "[", "#", "]"}]}], "/", "2"}], ")"}], "&"}], "/@", 
+        "l"}], ")"}]}]}], "\[IndentingNewLine]", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"MFCC", "[", 
+    RowBox[{"fs_Integer", ",", "frame_List"}], "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"l", ",", "fft", ",", "halflen"}], "}"}], ",", 
+     "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"halflen", "=", 
+       RowBox[{
+        RowBox[{"Length", "@", "frame"}], "/", "2"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"fft", "=", 
+       RowBox[{"WindowedFFT", "[", "HammingWindow", "]"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"l", "=", 
+       RowBox[{
+        RowBox[{"(", 
+         RowBox[{
+          RowBox[{"#", "[", 
+           RowBox[{"[", 
+            RowBox[{";;", "halflen"}], "]"}], "]"}], "&"}], ")"}], "@", 
+        RowBox[{
+         RowBox[{"(", 
+          RowBox[{
+           RowBox[{"Power", "[", 
+            RowBox[{"#", ",", "2"}], "]"}], "&"}], ")"}], "@", 
+         RowBox[{"Abs", "@", 
+          RowBox[{"fft", "@", "frame"}]}]}]}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"l", "=", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"Log", "@", 
+          RowBox[{"(", 
+           RowBox[{"l", ".", "#"}], ")"}]}], "&"}], "/@", 
+        RowBox[{"MelFilterBank", "[", 
+         RowBox[{"fs", ",", "halflen", ",", "24", ",", 
+          RowBox[{"{", 
+           RowBox[{"0", ",", "0.4"}], "}"}]}], "]"}]}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{
+       RowBox[{"FourierDCT", "[", "l", "]"}], "[", 
+       RowBox[{"[", 
+        RowBox[{";;", "12"}], "]"}], "]"}]}]}], "\[IndentingNewLine]", 
+    "]"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{
+   RowBox[{"FramesFilter", "[", "frames_", "]"}], ":=", 
+   RowBox[{"Module", "[", "\[IndentingNewLine]", 
+    RowBox[{
+     RowBox[{"{", 
+      RowBox[{"l", ",", "th"}], "}"}], ",", "\[IndentingNewLine]", 
+     RowBox[{
+      RowBox[{"l", "=", 
+       RowBox[{
+        RowBox[{
+         RowBox[{"Tr", "[", 
+          RowBox[{
+           RowBox[{"Abs", "[", "#", "]"}], "^", "2"}], "]"}], "&"}], "/@", 
+        "frames"}]}], ";", "\[IndentingNewLine]", 
+      RowBox[{"th", "=", 
+       RowBox[{
+        RowBox[{"Max", "[", "l", "]"}], "/", "50"}]}], ";", 
+      "\[IndentingNewLine]", 
+      RowBox[{"frames", "[", 
+       RowBox[{"[", 
+        RowBox[{"Select", "[", 
+         RowBox[{
+          RowBox[{"Range", "[", 
+           RowBox[{"Length", "@", "frames"}], "]"}], ",", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"l", "[", 
+             RowBox[{"[", "#", "]"}], "]"}], ">", "th"}], "&"}]}], "]"}], 
+        "]"}], "]"}]}]}], "\[IndentingNewLine]", "]"}]}], ";"}]}], "Input",
+ InitializationCell->True]
+}, Closed]],
+
+Cell[CellGroupData[{
+
+Cell["Examples", "Section"],
+
+Cell[CellGroupData[{
+
+Cell["Create a Model", "Subsection"],
+
+Cell[BoxData[{
+ RowBox[{
+  RowBox[{"wav", "=", 
+   RowBox[{"Import", "[", "\"\<wav file\>\"", "]"}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"frames", "=", 
+   RowBox[{"FramesFilter", "@", 
+    RowBox[{"FrameSplit", "@", 
+     RowBox[{"Preemphasis", "@", 
+      RowBox[{"wav", "[", 
+       RowBox[{"[", 
+        RowBox[{"1", ",", "1", ",", "1"}], "]"}], "]"}]}]}]}]}], 
+  ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"mfcc", "=", 
+   RowBox[{
+    RowBox[{
+     RowBox[{"MFCC", "[", 
+      RowBox[{
+       RowBox[{"wav", "[", 
+        RowBox[{"[", 
+         RowBox[{"1", ",", 
+          RowBox[{"-", "1"}]}], "]"}], "]"}], ",", "#"}], "]"}], "&"}], "/@", 
+    "frames"}]}], ";"}], "\[IndentingNewLine]", 
+ RowBox[{
+  RowBox[{"model", "=", 
+   RowBox[{"GMMEstimate", "[", 
+    RowBox[{"mfcc", ",", "6"}], "]"}]}], ";", 
+  RowBox[{"(*", 
+   RowBox[{"K", " ", "can", " ", "be", " ", "around", " ", "6"}], " ", 
+   "*)"}]}]}], "Input"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Check the Likelihook ", "Subsection"],
+
+Cell[BoxData[
+ RowBox[{"CalcLogLikelihood", "[", 
+  RowBox[{"mfcc", ",", "model"}], "]"}]], "Input"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1246, 727},
+WindowMargins->{{-8, Automatic}, {Automatic, 0}},
+Magnification:>1.5 Inherited,
+FrontEndVersion->"10.3 for Microsoft Windows (32-bit) (2015\:5e7410\:67089\
+\:65e5)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 39, 0, 106, "Section"],
+Cell[622, 24, 181, 5, 67, "Text"],
+Cell[806, 31, 173, 6, 67, "Text"],
+Cell[982, 39, 394, 13, 133, "Text"],
+Cell[1379, 54, 7758, 218, 1287, "Input",
+ InitializationCell->True]
+}, Closed]],
+Cell[CellGroupData[{
+Cell[9174, 277, 53, 0, 83, "Section"],
+Cell[9230, 279, 7354, 221, 1537, "Input",
+ InitializationCell->True]
+}, Closed]],
+Cell[CellGroupData[{
+Cell[16621, 505, 27, 0, 83, "Section"],
+Cell[CellGroupData[{
+Cell[16673, 509, 36, 0, 72, "Subsection"],
+Cell[16712, 511, 952, 31, 162, "Input"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[17701, 547, 43, 0, 72, "Subsection"],
+Cell[17747, 549, 100, 2, 45, "Input"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
